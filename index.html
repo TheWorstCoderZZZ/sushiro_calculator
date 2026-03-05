@@ -2,15 +2,19 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>壽司郎計數機 Pro 🍣</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>壽司郎計數機🍣</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d32f2f">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body { font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background-color: #f4f7f6; padding: 20px; max-width: 500px; margin: 0 auto; color: #333; }
   h2 { text-align: center; color: #d32f2f; margin-bottom: 20px; letter-spacing: 1px; }
   .section-title { font-size: 16px; color: #555; margin: 20px 0 10px 5px; font-weight: bold; border-left: 4px solid #d32f2f; padding-left: 8px; }
   
-  /* 碟數控制區 */
   .plate-row { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
   .plate-info { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: bold; width: 130px; }
   .color-box { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ddd; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
@@ -23,13 +27,11 @@
   button.qty-btn:active { background-color: #d0d0d0; transform: scale(0.95); }
   .qty { font-size: 18px; width: 24px; text-align: center; font-weight: bold; }
   
-  /* 摺疊式特別餐單 */
   .toggle-btn { width: 100%; padding: 12px; font-size: 15px; background-color: #fff; border: 2px dashed #d32f2f; color: #d32f2f; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-bottom: 10px; }
   .toggle-btn:hover { background-color: #ffebee; }
   .hidden { display: none !important; }
   .special-menu-content { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px; }
 
-  /* 期間限定 / 甜品快速選擇 */
   .quick-add-container { display: flex; gap: 8px; flex-wrap: wrap; }
   .quick-btn { padding: 8px 12px; font-size: 14px; background-color: #fff; border: 1px solid #d32f2f; color: #d32f2f; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
   .quick-btn:active { background-color: #d32f2f; color: #fff; }
@@ -40,7 +42,6 @@
   .custom-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; font-size: 15px; border-left: 3px solid #4CAF50; }
   .delete-btn { background-color: #ff4d4d; color: white; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; }
   
-  /* 圖表與結果區 */
   .chart-container { background: #fff; padding: 15px; border-radius: 12px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 200px; }
   .result { background: #fff; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
   .result p { font-size: 16px; margin: 10px 0; display: flex; justify-content: space-between; color: #555; }
@@ -52,7 +53,7 @@
 </head>
 <body>
 
-<h2>🍣 壽司郎計數機 Pro</h2>
+<h2>🍣 壽司郎計數機</h2>
 
 <div class="section-title">一般壽司碟</div>
 <div id="plates-container"></div>
@@ -69,7 +70,6 @@
     <button class="quick-btn" onclick="addCustomItem('蜆肉茶碗蒸', 19)">🥚 蜆肉茶碗蒸 ($19)</button>
     <button class="quick-btn" onclick="addCustomItem('蜆肉咖喱烏冬', 34)">🍜 蜆肉咖喱烏冬 ($34)</button>
     <button class="quick-btn" onclick="addCustomItem('親手包雪糕大福', 27)">🍡 雪糕大福 ($27)</button>
-    
     <button class="quick-btn" onclick="addCustomItem('卡達拉娜', 22)">🍮 卡達拉娜 ($22)</button>
     <button class="quick-btn" onclick="addCustomItem('芭菲', 32)">🍨 人氣芭菲 ($32)</button>
   </div>
@@ -98,6 +98,16 @@
 </div>
 
 <script>
+  // --- PWA Service Worker 註冊 ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Sushiro SW 註冊成功！', reg.scope))
+        .catch(err => console.log('Sushiro SW 註冊失敗：', err));
+    });
+  }
+
+  // --- 應用程式邏輯 ---
   const platesData = [
     { id: 'red', name: '紅碟', price: 12, color: '#ff4d4d' },
     { id: 'silver', name: '銀碟', price: 17, color: '#e0e0e0' },
@@ -109,7 +119,6 @@
   let customItems = []; 
   let sushiChart;
 
-  // 初始化壽司碟UI
   const platesContainer = document.getElementById('plates-container');
   platesData.forEach(plate => {
     platesContainer.innerHTML += `
@@ -136,43 +145,32 @@
           borderWidth: 2
         }]
       },
-      options: { 
-        responsive: true, 
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'right', labels: { font: { size: 12 } } } }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 12 } } } } }
     });
   }
 
-  // 讀取 LocalStorage 記錄
   function loadData() {
     const savedCounts = localStorage.getItem('sushiro_counts');
     const savedCustomItems = localStorage.getItem('sushiro_customItems');
 
     if (savedCounts) {
       counts = JSON.parse(savedCounts);
-      platesData.forEach(plate => {
-        document.getElementById(`qty-${plate.id}`).innerText = counts[plate.id];
-      });
+      platesData.forEach(plate => { document.getElementById(`qty-${plate.id}`).innerText = counts[plate.id]; });
     }
-    
     if (savedCustomItems) {
       customItems = JSON.parse(savedCustomItems);
       renderCustomList();
     }
   }
 
-  // 儲存至 LocalStorage
   function saveData() {
     localStorage.setItem('sushiro_counts', JSON.stringify(counts));
     localStorage.setItem('sushiro_customItems', JSON.stringify(customItems));
   }
 
-  // 展開 / 收起特別餐單
   function toggleSpecialMenu() {
     const container = document.getElementById('special-menu-container');
     const btn = document.getElementById('toggle-menu-btn');
-    
     if (container.classList.contains('hidden')) {
       container.classList.remove('hidden');
       btn.innerText = '收起特別餐單 ▲';
@@ -193,7 +191,6 @@
   function addCustomItem(name, presetPrice) {
     const input = document.getElementById('custom-price-input');
     let price = presetPrice !== null ? presetPrice : parseFloat(input.value);
-    
     if (!isNaN(price) && price > 0) {
       customItems.push({ name: name, price: price });
       if (presetPrice === null) input.value = ''; 
@@ -214,10 +211,7 @@
     customItems.forEach((item, index) => {
       const li = document.createElement('li');
       li.className = 'custom-item';
-      li.innerHTML = `
-        <span>🍽️ ${item.name}: <strong>$${item.price}</strong></span>
-        <button class="delete-btn" onclick="removeCustomItem(${index})">刪除</button>
-      `;
+      li.innerHTML = `<span>🍽️ ${item.name}: <strong>$${item.price}</strong></span><button class="delete-btn" onclick="removeCustomItem(${index})">刪除</button>`;
       listElement.appendChild(li);
     });
   }
@@ -245,35 +239,23 @@
 
     sushiChart.data.datasets[0].data = chartData;
     sushiChart.update();
-
-    // 每次計數都自動儲存
     saveData();
   }
 
   function reset() {
     counts = { red: 0, silver: 0, gold: 0, black: 0 };
     customItems = [];
-    platesData.forEach(plate => {
-      document.getElementById(`qty-${plate.id}`).innerText = '0';
-    });
+    platesData.forEach(plate => { document.getElementById(`qty-${plate.id}`).innerText = '0'; });
     document.getElementById('custom-price-input').value = '';
     renderCustomList();
     calculate();
   }
   
   document.getElementById("custom-price-input").addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      addCustomItem('自訂單點', null);
-    }
+    if (event.key === "Enter") { event.preventDefault(); addCustomItem('自訂單點', null); }
   });
 
-  // 網頁載入時順序：畫圖表 -> 讀取舊資料 -> 計一次數更新圖表
-  window.onload = function() {
-    initChart();
-    loadData();
-    calculate();
-  };
+  window.onload = function() { initChart(); loadData(); calculate(); };
 </script>
 
 </body>
