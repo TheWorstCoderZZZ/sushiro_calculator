@@ -1,0 +1,16 @@
+{
+  "name": "壽司郎計數機 Pro",
+  "short_name": "壽司計數機",
+  "description": "最強壽司郎食碟計數與分析工具",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#d32f2f",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081162.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
